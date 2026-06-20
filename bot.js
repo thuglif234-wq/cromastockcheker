@@ -10,8 +10,10 @@ const crypto = require('crypto');
 const BOT_TOKEN = '8663516925:AAEHVFE4iGM2AOgzYeQzrj3hT1E8125uTEM';
 const ADMIN_CHAT_ID = '7485181331';
 const CHECK_INTERVAL = 15000; // STRICT 15 SECONDS
-const RENDER_URL = 'https://croma-stock-final.onrender.com';
+// ðŸ”¥ Render auto-provides RENDER_EXTERNAL_URL. Fallback to hardcoded if needed.
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL || process.env.RENDER_URL || 'https://croma-stock-final.onrender.com';
 const DB_FILE = path.join(__dirname, 'database.json');
+const WEBHOOK_PATH = '/secret-telegram-webhook';
 // ----------------------------------------
 
 const bot = new Telegraf(BOT_TOKEN);
@@ -69,18 +71,24 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 app.use(express.json());
-app.use(bot.webhookCallback('/secret-telegram-webhook'));
+app.use(bot.webhookCallback(WEBHOOK_PATH));
 
 app.get('/', (req, res) => res.status(200).send('Croma Stock Engine Core Online!'));
+app.get('/health', (req, res) => res.status(200).json({ ok: true, url: RENDER_URL }));
 
 app.listen(PORT, '0.0.0.0', async () => {
     console.log(`ðŸš€ Croma Stock Server listening on port ${PORT}`);
+    console.log(`ðŸŒ Using RENDER_URL: ${RENDER_URL}`);
     try {
         await bot.telegram.deleteWebhook({ drop_pending_updates: true });
-        await bot.telegram.setWebhook(`${RENDER_URL}/secret-telegram-webhook`, {
-            drop_pending_updates: true
-        });
-    } catch (err) {}
+        const hookUrl = `${RENDER_URL}${WEBHOOK_PATH}`;
+        const ok = await bot.telegram.setWebhook(hookUrl, { drop_pending_updates: true });
+        console.log(`âœ… Webhook set to: ${hookUrl} (result: ${ok})`);
+        const info = await bot.telegram.getWebhookInfo();
+        console.log('â„¹ï¸ Webhook info:', JSON.stringify(info));
+    } catch (err) {
+        console.error('âŒ Webhook setup failed:', err.message);
+    }
 });
 
 setInterval(() => {
@@ -149,6 +157,8 @@ bot.start((ctx) => {
     const userId = ctx.from.id.toString();
     const name = `${ctx.from.first_name || ''} ${ctx.from.last_name || ''}`.trim() || 'No Name';
 
+    console.log(`â–¶ï¸ /start from ${userId} (${name})`);
+
     initDatabase();
     if (isUserApproved(userId)) {
         delete userSessions[userId];
@@ -163,7 +173,7 @@ bot.start((ctx) => {
             Markup.button.callback('Approve âœ…', `approve_${userId}`),
             Markup.button.callback('Decline âŒ', `decline_${userId}`)
         ]])
-    ).catch(() => {});
+    ).catch((e) => console.error('Admin notify failed:', e.message));
 });
 
 bot.hears('ðŸš¨ Start Stock Track', (ctx) => {
@@ -193,6 +203,11 @@ bot.on('text', async (ctx, next) => {
         setupStockScraperSystem(ctx, cromaLink);
         delete userSessions[userId];
     }
+});
+
+// Global error handler so bot doesn't die silently
+bot.catch((err, ctx) => {
+    console.error(`âŒ Bot error for ${ctx.updateType}:`, err.message);
 });
 
 async function setupStockScraperSystem(ctx, cromaLink) {
