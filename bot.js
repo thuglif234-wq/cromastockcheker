@@ -7,7 +7,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 // --- ðŸ”’ CONFIGURATION HARDLOCKED ---
-const BOT_TOKEN = '8663516925:AAEHVFE4iGM2A0gzYeQzrj3hT1E8125uTEM';
+const BOT_TOKEN = '8663516925:AAEHVFE4iGM2AOgzYeQzrj3hT1E8125uTEM';
 const ADMIN_CHAT_ID = '7485181331';
 const CHECK_INTERVAL = 15000; // STRICT 15 SECONDS
 const RENDER_URL = 'https://croma-stock-final.onrender.com';
