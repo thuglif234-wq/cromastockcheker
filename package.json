@@ -1,16 +1,18 @@
 {
   "name": "croma-stock-checker",
   "version": "1.0.0",
-  "description": "Croma 24/7 Real-Time Stock Checker Bot",
+  "description": "Croma Stock Checker Telegram Bot",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
-    "node-telegram-bot-api": "^0.66.0",
-    "axios": "^1.6.8",
-    "cheerio": "^1.0.0-rc.12",
-    "express": "^4.19.2",
-    "dotenv": "^16.4.5"
+    "telegraf": "^4.16.3",
+    "axios": "^1.7.7",
+    "cheerio": "^1.0.0",
+    "express": "^4.21.1"
   }
 }
